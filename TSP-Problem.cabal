@@ -1,0 +1,20 @@
+name:                TSP-Problem
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/jcm300/TSP_Problem#readme
+license:             MIT
+license-file:        LICENSE
+author:              José Carlos Lima Martins and Miguel Miranda Quaresma
+maintainer:          zeclmartins@gmail.com; miguelquaresma97@gmail.com 
+copyright:           2019 José Carlos Lima Martins; Miguel Miranda Quaresma
+category:            App
+build-type:          Simple
+cabal-version:       >=1.10
+extra-source-files:  README.md
+
+executable TSP_Problem
+  hs-source-dirs:      src
+  main-is:             TSP_Problem.hs
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
