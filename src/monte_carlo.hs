@@ -5,15 +5,17 @@ import Data.List
 
 -- Recebe uma Matriz de floats com os custos entre os pontos (indices)
 -- Devolve o caminho (lista de inteiros) e o custo total (float)
-traveling_monte_carlo :: [[Float]] -> (Float,[Int])
-traveling_monte_carlo [] = (0,[])
-traveling_monte_carlo (hL:t) = (dist,route)  --iterations((hL:t),n,route,dist)
-                            where
-                                n = length hL
-                                randValue = randomRIO (0,n)
-                                route = (permutations [0..n]) !! randValue
-                                pathLastToFirst = ((hL:t) !! last route) !! head route
-                                dist = calcDist route (hL:t) pathLastToFirst
+traveling_monte_carlo :: [[Float]] -> IO (Float,[Int])
+traveling_monte_carlo [] = return (0,[])
+traveling_monte_carlo (hL:t) = do
+                                let n = length hL
+                                let perm = (permutations [0..n-1])
+                                randValue <- randomRIO (0, (length perm)-1)
+                                let route = perm !! randValue
+                                let pathLastToFirst = ((hL:t) !! last route) !! head route
+                                let dist = calcDist route (hL:t) pathLastToFirst
+                                retValue <- iterations (hL:t) n route dist 100 100
+                                return retValue
 
 calcDist :: Num a => [Int] -> [[a]] -> a -> a
 calcDist _ [] _ = 0
@@ -23,16 +25,17 @@ calcDist (p:t) ll dist = calcDist t ll (dist+path)
                             where
                                 path = (ll !! p) !! (head t)
 
-iterations :: [[Float]] -> Int -> [Int] -> Float -> Int -> Int -> (Float,[Int])
-iterations _ _ route dist 0 _ = (dist,route)
-iterations ll n route dist it itStart = iterations ll n route dist it itStart
-                            where
-                                c = randomRIO (0,n)
-                                (prev,n1,n2) = getNeighbors c n
-                                delta = calcDelta (c,prev,n1,n2) route ll
-                                route = swap route delta (c,n1)
-                                dist = updateDist dist delta
-                                it = incr it delta itStart
+iterations :: [[Float]] -> Int -> [Int] -> Float -> Int -> Int -> IO (Float,[Int])
+iterations _ _ route dist 0 _ = return (dist,route)
+iterations ll n route dist it itStart = do
+                                c <- randomRIO (0,n-1)
+                                let (prev,n1,n2) = getNeighbors c (n-1)
+                                let delta = calcDelta (c,prev,n1,n2) route ll
+                                let routeUp = swap route delta (c,n1)
+                                let distUp = updateDist dist delta
+                                let itUp = incr it delta itStart
+                                retValue <- iterations ll n routeUp distUp itUp itStart
+                                return retValue
 
 getNeighbors :: Int -> Int -> (Int,Int,Int)
 getNeighbors 0 n = (n,1,2)
