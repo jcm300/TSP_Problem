@@ -46,14 +46,17 @@ optimizePath g path nc it temp = do
                                     Just path_new -> optimizePath g path_new nc 100 temp_new
                                     Nothing -> optimizePath g path nc (it-1) temp_new
 
-genInitialPath :: Int -> IO [Int]
-genInitialPath nodeCount = do
-                            let nodes = [0..nodeCount-1]
-                            return nodes
+genInitialPath :: [Int] -> Int -> IO [Int]
+genInitialPath [] _ = return []
+genInitialPath nodes nc = do
+                        n_head <- randomRIO(0, nc-1)
+                        let nodes_n = swapNodes (nodes !! 0) (nodes !! n_head) nodes
+                        nodes_r <- genInitialPath (tail nodes_n) (nc-1)
+                        return ((nodes_n !! 0) : nodes_r)
         
 simulatedAnnealing :: Graph -> IO ()
 simulatedAnnealing g = do
-                        let nodeCount = length(g)
-                        p <- genInitialPath nodeCount
-                        path <- optimizePath g p nodeCount 100 1
+                        let nc = length(g); nodes = [0..nc-1]
+                        p <- genInitialPath nodes nc
+                        path <- optimizePath g p nc 100 1
                         print(path)
