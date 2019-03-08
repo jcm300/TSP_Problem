@@ -5,6 +5,13 @@ import Data.List
 
 type Graph = [[Float]]
 
+pathCost :: Graph -> [Int] -> Int -> Float
+pathCost g path nc = foldr (+) 0.0 edge_costs
+            where
+                edges = zip (take (nc-1) path) (tail path)
+                edge_costs = map (\tf -> edgeCost g tf) edges
+
+
 swapNodes :: Int -> Int -> [Int] -> [Int]
 swapNodes s1 s2 l = map (\x -> if x==s1 then s2 else if x==s2 then s1 else x) l
 
@@ -30,15 +37,14 @@ updatePath g path current nodeCount temp threshold  | delta > 0 || (temp >= 0.00
                                                             updated_path = Just (swapNodes current next path)
                                         
 optimizePath :: Graph -> [Int] -> Int -> Int -> Float -> IO (Float, [Int])
-optimizePath _ path _ 0  _ = return (0, path)
-optimizePath g path nodeCount it temp = do
-                                current <- randomRIO (0, nodeCount-1)
+optimizePath g path nc 0  _ = return (pathCost g path nc, path)
+optimizePath g path nc it temp = do
+                                current <- randomRIO (0, nc-1)
                                 threshold <- randomRIO(0, 1.0)
-                                print(threshold)
-                                let result = updatePath g path current nodeCount temp threshold; temp_new = temp * 0.99
+                                let result = updatePath g path current nc temp threshold; temp_new = temp * 0.99
                                 case result of
-                                    Just path_new -> optimizePath g path_new nodeCount 100 temp_new
-                                    Nothing -> optimizePath g path nodeCount (it-1) temp_new
+                                    Just path_new -> optimizePath g path_new nc 100 temp_new
+                                    Nothing -> optimizePath g path nc (it-1) temp_new
 
 genInitialPath :: Int -> IO [Int]
 genInitialPath nodeCount = do
