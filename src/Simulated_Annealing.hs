@@ -1,4 +1,4 @@
-module Annealing(optimizePath) where
+module Simulated_Annealing where
 
 import System.Random
 import Data.List
