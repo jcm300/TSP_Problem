@@ -1,4 +1,4 @@
-module Simulated_Annealing where
+module Simulated_Annealing(simulatedAnnealing) where
 
 import System.Random
 import Data.List
@@ -27,8 +27,8 @@ getNeighbours current n | current == n-1 = (n-2, 0, 1)
 
 
 updatePath :: Graph -> [Int] -> Int -> Int -> Float -> Float -> Maybe [Int]
-updatePath g path current nodeCount temp threshold  | delta > 0 || (temp >= 0.001 && (exp (-delta)/temp) >= threshold) = updated_path
-                                    		        | otherwise = Nothing
+updatePath g path current nodeCount temp threshold  | delta > 0 || (temp > 0.001 && (exp delta/temp) >= threshold) = updated_path
+                                                    | otherwise = Nothing
                                                         where
                                                             (prev, next, next_next) = getNeighbours current nodeCount
                                                             old_cost = (edgeCost g (prev, current)) + (edgeCost g (next, next_next))
@@ -54,9 +54,8 @@ genInitialPath nodes nc = do
                         nodes_r <- genInitialPath (tail nodes_n) (nc-1)
                         return ((nodes_n !! 0) : nodes_r)
         
-simulatedAnnealing :: Graph -> IO ()
+simulatedAnnealing :: Graph -> IO (Float, [Int])
 simulatedAnnealing g = do
                         let nc = length(g); nodes = [0..nc-1]
                         p <- genInitialPath nodes nc
-                        path <- optimizePath g p nc 100 1
-                        print(path)
+                        optimizePath g p nc 100 1

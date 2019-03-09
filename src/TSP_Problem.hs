@@ -3,7 +3,7 @@ import Simulated_Annealing
 import System.Random
 
 size :: Int
-size = 10 
+size = 5 
 
 -- Gera cada linha da parte inferior da matriz simétrica
 genLine :: [Float] -> Int -> IO ([Float])
@@ -54,6 +54,13 @@ monte_carlo_test = do
                 (dist, path) <- traveling_monte_carlo matrix
                 print ("The path is: " ++ show path) 
                 print ("The cost is: " ++ show dist)
+
+sa_test :: IO ()
+sa_test = do
+            dist_graph <- genMatrix [] size
+            (dist, path) <- simulatedAnnealing dist_graph
+            print ("Path found: " ++ show path)
+            print ("Total cost: " ++ show dist)
 
 -- Main
 main :: IO ()
