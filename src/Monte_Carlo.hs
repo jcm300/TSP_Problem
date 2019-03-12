@@ -1,4 +1,4 @@
-module Monte_Carlo where
+module Monte_Carlo(traveling_monte_carlo) where
 
 import System.Random
 import Data.List
@@ -9,7 +9,7 @@ traveling_monte_carlo :: [[Float]] -> IO (Float,[Int])
 traveling_monte_carlo [] = return (0,[])
 traveling_monte_carlo (hL:t) = do
                                 let n = length hL
-                                let perm = (permutations [0..n-1])
+                                let perm = permutations [0..n-1]
                                 randValue <- randomRIO (0, (length perm)-1)
                                 let route = perm !! randValue
                                 let pathLastToFirst = ((hL:t) !! last route) !! head route
@@ -77,7 +77,7 @@ calcDelta (c,prev,n1,n2) route ll = delta
                                     ll1 = (ll !! pC) !! pN2
                                     ll2 = (ll !! pPrev) !! pC
                                     ll3 = (ll !! pN1) !! pN2
-                                    delta = ll0 + ll1 - ll2 - ll3
+                                    delta = (ll0 + ll1) - (ll2 + ll3)
 
 -- Dado o caminho, o delta, c e n1, caso delta maior que 0 não muda o caminho
 -- caso delta menor que 0 troca o ponto na posição c pelo ponto na posição n1

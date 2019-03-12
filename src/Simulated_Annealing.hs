@@ -1,4 +1,4 @@
-module Simulated_Annealing(simulatedAnnealing) where
+module Simulated_Annealing(simulatedAnnealing, pathCost) where
 
 import System.Random
 import Data.List
@@ -8,7 +8,7 @@ type Graph = [[Float]]
 pathCost :: Graph -> [Int] -> Int -> Float
 pathCost g path nc = foldr (+) 0.0 edge_costs
             where
-                edges = zip (take (nc-1) path) (tail path)
+                edges = zip path ((tail path) ++ [head path])
                 edge_costs = map (\tf -> edgeCost g tf) edges
 
 
@@ -16,7 +16,7 @@ swapNodes :: Int -> Int -> [Int] -> [Int]
 swapNodes s1 s2 l = map (\x -> if x==s1 then s2 else if x==s2 then s1 else x) l
 
 edgeCost :: Graph -> (Int, Int) -> Float
-edgeCost g (from, to) = g !! from !! to
+edgeCost g (from, to) = (g !! from) !! to
 
 
 getNeighbours :: Int -> Int -> (Int, Int, Int)
@@ -26,25 +26,25 @@ getNeighbours current n | current == n-1 = (n-2, 0, 1)
                         | otherwise =  (current-1, current+1, current+2)
 
 
-updatePath :: Graph -> [Int] -> Int -> Int -> Float -> Float -> Maybe [Int]
-updatePath g path current nodeCount temp threshold  | delta > 0 || (temp > 0.001 && (exp (delta/temp)) > threshold) = updated_path
-                                                    | otherwise = Nothing
+updatePath :: Graph -> [Int] -> Int -> Int -> Float -> Float -> (Bool, [Int])
+updatePath g path current nodeCount temp threshold  | delta < 0 || (temp > 0.001 && (exp (-delta/temp)) > threshold) = updated_path
+                                                    | otherwise = (False, path)
                                                         where
                                                             (prev, next, next_next) = getNeighbours current nodeCount
                                                             old_cost = (edgeCost g (prev, current)) + (edgeCost g (next, next_next))
                                                             new_cost = (edgeCost g (prev, next)) + (edgeCost g (current, next_next))
-                                                            delta = old_cost - new_cost
-                                                            updated_path = Just (swapNodes current next path)
+                                                            delta = new_cost - old_cost
+                                                            updated_path = (delta < 0, (swapNodes current next path))
                                         
 optimizePath :: Graph -> [Int] -> Int -> Int -> Float -> IO (Float, [Int])
 optimizePath g path nc 0  _ = return (pathCost g path nc, path)
 optimizePath g path nc it temp = do
                                 current <- randomRIO (0, nc-1)
-                                threshold <- randomRIO(0, 1.0)
+                                threshold <- randomRIO (0, 1.0)
                                 let result = updatePath g path current nc temp threshold; temp_new = temp * 0.99
-                                case result of
-                                    Just path_new -> optimizePath g path_new nc 100 temp_new
-                                    Nothing -> optimizePath g path nc (it-1) temp_new
+                                if (fst result) then 
+                                    optimizePath g (snd result) nc 100 temp_new
+                                else optimizePath g (snd result) nc (it-1) temp_new
 
 genInitialPath :: [Int] -> Int -> IO [Int]
 genInitialPath [] _ = return []
