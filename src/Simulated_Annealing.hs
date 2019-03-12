@@ -27,7 +27,7 @@ getNeighbours current n | current == n-1 = (n-2, 0, 1)
 
 
 updatePath :: Graph -> [Int] -> Int -> Int -> Float -> Float -> Maybe [Int]
-updatePath g path current nodeCount temp threshold  | delta > 0 || (temp > 0.001 && (exp delta/temp) >= threshold) = updated_path
+updatePath g path current nodeCount temp threshold  | delta > 0 || (temp > 0.001 && (exp (delta/temp)) > threshold) = updated_path
                                                     | otherwise = Nothing
                                                         where
                                                             (prev, next, next_next) = getNeighbours current nodeCount

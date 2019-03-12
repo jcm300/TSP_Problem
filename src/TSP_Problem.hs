@@ -3,7 +3,7 @@ import Simulated_Annealing
 import System.Random
 
 size :: Int
-size = 5 
+size = 4 
 
 -- Gera cada linha da parte inferior da matriz simétrica
 genLine :: [Float] -> Int -> IO ([Float])
