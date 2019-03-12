@@ -27,12 +27,12 @@ getNeighbours current n | current == n-1 = (n-2, 0, 1)
 
 
 updatePath :: Graph -> [Int] -> Int -> Int -> Float -> Float -> (Bool, [Int])
-updatePath g path current nodeCount temp threshold  | delta < 0 || (temp > 0.001 && (exp (-delta/temp)) > threshold) = updated_path
+updatePath g path current nodeCount temp threshold  | delta < 0 || (temp > 0.001 && (exp ((-delta)/temp)) >= threshold) = updated_path
                                                     | otherwise = (False, path)
                                                         where
                                                             (prev, next, next_next) = getNeighbours current nodeCount
-                                                            old_cost = (edgeCost g (prev, current)) + (edgeCost g (next, next_next))
-                                                            new_cost = (edgeCost g (prev, next)) + (edgeCost g (current, next_next))
+                                                            old_cost = (edgeCost g (path !! prev, path !! current)) + (edgeCost g (path !! next,path !! next_next))
+                                                            new_cost = (edgeCost g (path !! prev, path !! next)) + (edgeCost g (path !! current, path !! next_next)) 
                                                             delta = new_cost - old_cost
                                                             updated_path = (delta < 0, (swapNodes current next path))
                                         
@@ -41,7 +41,7 @@ optimizePath g path nc 0  _ = return (pathCost g path nc, path)
 optimizePath g path nc it temp = do
                                 current <- randomRIO (0, nc-1)
                                 threshold <- randomRIO (0, 1.0)
-                                let result = updatePath g path current nc temp threshold; temp_new = temp * 0.99
+                                let result = updatePath g path current nc temp threshold; temp_new = temp * 0.999
                                 if (fst result) then 
                                     optimizePath g (snd result) nc 100 temp_new
                                 else optimizePath g (snd result) nc (it-1) temp_new
