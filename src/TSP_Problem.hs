@@ -1,5 +1,4 @@
 import Monte_Carlo
-import Monte_CarloSA
 import Simulated_Annealing
 import System.Random
 
@@ -53,13 +52,6 @@ monte_carlo_test :: IO ()
 monte_carlo_test = do
                 matrix <- genMatrix [] size
                 (dist, path) <- traveling_monte_carlo matrix
-                print ("The path is: " ++ show path) 
-                print ("The cost is: " ++ show dist)
-
-monte_carloSA_test :: IO ()
-monte_carloSA_test = do
-                matrix <- genMatrix [] size
-                (dist, path) <- traveling_monte_carloSA matrix
                 print ("The path is: " ++ show path) 
                 print ("The cost is: " ++ show dist)
 

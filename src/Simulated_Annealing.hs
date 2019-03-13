@@ -26,15 +26,15 @@ getNeighbours current n | current == n-1 = (n-2, 0, 1)
                         | otherwise =  (current-1, current+1, current+2)
 
 
-updatePath :: Graph -> [Int] -> Int -> Int -> Float -> Float -> (Bool, [Int])
+updatePath :: Graph -> [Int] -> Int -> Int -> Float -> Float -> Maybe [Int]
 updatePath g path current nodeCount temp threshold  | delta < 0 || (temp > 0.001 && (exp ((-delta)/temp)) >= threshold) = updated_path
-                                                    | otherwise = (False, path)
+                                                    | otherwise = Nothing
                                                         where
                                                             (prev, next, next_next) = getNeighbours current nodeCount
                                                             old_cost = (edgeCost g (path !! prev, path !! current)) + (edgeCost g (path !! next,path !! next_next))
                                                             new_cost = (edgeCost g (path !! prev, path !! next)) + (edgeCost g (path !! current, path !! next_next)) 
                                                             delta = new_cost - old_cost
-                                                            updated_path = (delta < 0, (swapNodes current next path))
+                                                            updated_path = Just (swapNodes current next path)
                                         
 optimizePath :: Graph -> [Int] -> Int -> Int -> Float -> IO (Float, [Int])
 optimizePath g path nc 0  _ = return (pathCost g path nc, path)
@@ -42,9 +42,9 @@ optimizePath g path nc it temp = do
                                 current <- randomRIO (0, nc-1)
                                 threshold <- randomRIO (0, 1.0)
                                 let result = updatePath g path current nc temp threshold; temp_new = temp * 0.999
-                                if (fst result) then 
-                                    optimizePath g (snd result) nc 100 temp_new
-                                else optimizePath g (snd result) nc (it-1) temp_new
+                                case result of
+                                    Just path_new -> optimizePath g path_new nc 100 temp_new
+                                    Nothing -> optimizePath g path nc (it-1) temp_new
 
 genInitialPath :: [Int] -> Int -> IO [Int]
 genInitialPath [] _ = return []
