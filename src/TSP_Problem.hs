@@ -65,12 +65,18 @@ timeFunc f graph it s = do
 -- Run both methods to compare the solutions
 parallelTravel :: Int -> Int -> Int -> IO ()
 parallelTravel nodes it runs = do
+                            putStrLn (show nodes ++ " nodes, " ++ show it ++ " it, " ++ show runs ++ " runs: ")
                             graph <- genGraph nodes
                             sa <- sequence (replicate runs (timeFunc simulatedAnnealing graph it "SA: "))
+                            putStrLn ""
                             mc <- sequence (replicate runs (timeFunc traveling_monte_carlo graph it "MC: "))
-                            print sa
-                            print mc
+                            putStrLn ""
 
 -- Main
 main = do
-    parallelTravel 10 100 4
+    parallelTravel 10 100 15
+    parallelTravel 100 100 15
+    parallelTravel 1000 100 15
+    parallelTravel 10 500 15
+    parallelTravel 100 500 15
+    parallelTravel 1000 500 15
