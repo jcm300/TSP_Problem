@@ -1,7 +1,7 @@
 import Monte_Carlo(traveling_monte_carlo)
 import Simulated_Annealing(simulatedAnnealing)
 import System.Random
-import Criterion.Main
+import Data.Time.Clock (diffUTCTime, getCurrentTime)
 
 type Point = (Float, Float)
 
@@ -48,30 +48,29 @@ sa_test it size = do
             print ("Path found: " ++ show path)
             print ("Total cost: " ++ show dist)
 
-printResults :: [(Float, [Int])] -> IO ()
-printResults [] = putStrLn ""
-printResults ((d,p) : t) = do
-                            putStrLn ("Path found: " ++ show p)
-                            putStrLn ("Total cost: " ++ show d)
-                            putStrLn ""
-                            printResults t
+printResult :: (Float, [Int]) -> IO ()
+printResult (d,p) = do
+                        putStrLn ("Path found: " ++ show p)
+                        putStrLn ("Total cost: " ++ show d)
+                        putStrLn ""
+
+timeFunc :: ([[Float]] -> Int -> IO (Float,[Int])) -> [[Float]] -> Int -> [Char] -> IO ()
+timeFunc f graph it s = do
+            start <- getCurrentTime
+            result <- f graph it
+            end <- getCurrentTime
+            --printResult result
+            putStrLn $ s ++ show (end `diffUTCTime` start) ++ " elapsed."
 
 -- Run both methods to compare the solutions
 parallelTravel :: Int -> Int -> Int -> IO ()
 parallelTravel nodes it runs = do
                             graph <- genGraph nodes
-                            sa <- sequence (replicate runs (simulatedAnnealing graph it))
-                            --putStrLn "Simulated Annealing"
-                            --printResults sa
-                            mc <- sequence (replicate runs (traveling_monte_carlo graph it))
-                            --putStrLn "Monte Carlo"
-                            --printResults mc
-                            putStr ""
-               
+                            sa <- sequence (replicate runs (timeFunc simulatedAnnealing graph it "SA: "))
+                            mc <- sequence (replicate runs (timeFunc traveling_monte_carlo graph it "MC: "))
+                            print sa
+                            print mc
+
 -- Main
-main = defaultMain [
-    bgroup "parallelTravel" [
-                                bench "1" $ whnfIO (parallelTravel 5 100 2),
-                                bench "2" $ whnfIO (parallelTravel 10 100 2)
-                            ]
-                   ]
+main = do
+    parallelTravel 10 100 4
