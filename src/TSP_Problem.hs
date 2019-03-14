@@ -60,16 +60,19 @@ timeFunc f graph it s = do
             result <- f graph it
             end <- getCurrentTime
             --printResult result
-            putStrLn $ s ++ show (end `diffUTCTime` start) ++ " elapsed."
+            putStrLn $ "Cost: " ++ show (fst result)
+            putStrLn $ "Time: " ++ show (end `diffUTCTime` start)
 
 -- Run both methods to compare the solutions
 parallelTravel :: Int -> Int -> Int -> IO ()
 parallelTravel nodes it runs = do
                             putStrLn (show nodes ++ " nodes, " ++ show it ++ " it, " ++ show runs ++ " runs: ")
                             graph <- genGraph nodes
-                            sa <- sequence (replicate runs (timeFunc simulatedAnnealing graph it "SA: "))
-                            putStrLn ""
+                            putStrLn "MC:"
                             mc <- sequence (replicate runs (timeFunc traveling_monte_carlo graph it "MC: "))
+                            putStrLn ""
+                            putStrLn "SA:"
+                            sa <- sequence (replicate runs (timeFunc simulatedAnnealing graph it "SA: "))
                             putStrLn ""
 
 -- Main
