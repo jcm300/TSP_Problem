@@ -17,6 +17,17 @@ traveling_monte_carlo (hL:t) = do
                                 retValue <- iterations (hL:t) n route dist 100 100
                                 return retValue
 
+genInitialPath :: [Int] -> Int -> IO [Int]
+genInitialPath [] _ = return []
+genInitialPath nodes nc = do
+                        n_head <- randomRIO(0, nc-1)
+                        let nodes_n = swapNodes (nodes !! 0) (nodes !! n_head) nodes
+                        nodes_r <- genInitialPath (tail nodes_n) (nc-1)
+                        return ((nodes_n !! 0) : nodes_r)
+
+swapNodes :: Int -> Int -> [Int] -> [Int]
+swapNodes s1 s2 l = map (\x -> if x==s1 then s2 else if x==s2 then s1 else x) l
+
 -- Recebe uma lista com o caminho a percorrer e recebe as distâncias entre cada ponto (matriz)
 -- Recebe também um valor inicial
 -- Percorre o caminho e vai somando as distâncias entre cada dois pontos do caminho, o atual e
@@ -42,11 +53,13 @@ iterations ll n route dist it itStart = do
                                 c <- randomRIO (0,n-1)
                                 let (prev,n1,n2) = getNeighbors c (n-1)
                                 let delta = calcDelta (c,prev,n1,n2) route ll
-                                let routeUp = swap route delta (c,n1)
-                                let distUp = updateDist dist delta
-                                let itUp = incr it delta itStart
-                                retValue <- iterations ll n routeUp distUp itUp itStart
-                                return retValue
+                                if delta < 0
+                                    then do
+                                        retValue <- iterations ll n (swapNodes c n1 route) (dist+delta) itStart itStart
+                                        return retValue
+                                    else do
+                                        retValue <- iterations ll n route dist (it-1) itStart
+                                        return retValue
 
 -- Dado um ponto c e o número de pontos possíveis, calcula os vizinhos de c
 getNeighbors :: Int -> Int -> (Int,Int,Int)
@@ -55,14 +68,6 @@ getNeighbors c n
         | c==n-1 = (n-2,n,0)
         | c==n = (n-1,0,1)
         | otherwise = (c-1,c+1,c+2)
-
--- Dado um delta e o número inicial de iterações, se delta for menor que 0 o número de
--- iterações recebe um reset, ou seja passa a ter o número inicial de iterações. Caso
--- delta seja maior que 0 o número de iterações é decrementado em 1
-incr :: Int -> Float -> Int -> Int
-incr it delta itInit
-    | delta<0 = itInit
-    | otherwise = it-1
 
 -- Dado quatro pontos, o caminho, e as distâncias entre os pontos do caminho, calcula o
 -- delta
@@ -78,21 +83,3 @@ calcDelta (c,prev,n1,n2) route ll = delta
                                     ll2 = (ll !! pPrev) !! pC
                                     ll3 = (ll !! pN1) !! pN2
                                     delta = (ll0 + ll1) - (ll2 + ll3)
-
--- Dado o caminho, o delta, c e n1, caso delta maior que 0 não muda o caminho
--- caso delta menor que 0 troca o ponto na posição c pelo ponto na posição n1
-swap :: [Int] -> Float -> (Int,Int) -> [Int]
-swap [] _ _  = []
-swap route delta (c,n1)
-    | delta<0 = routeSwaped
-    | otherwise = route
-    where
-        temp = take c route ++ [route !! n1] ++ drop (c+1) route
-        routeSwaped = take n1 temp ++ [route !! c] ++ drop (n1+1) temp
-
--- Dado o delta e o dist, caso delta menor que 0 adiciona o delta à distância
--- caso delta maior que 0 não atualiza o dist
-updateDist :: Float -> Float -> Float
-updateDist dist delta
-    | delta<0 = dist + delta
-    | otherwise = dist
