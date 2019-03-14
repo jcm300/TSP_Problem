@@ -1,44 +1,8 @@
 import Monte_Carlo
-import Simulated_Annealing
+import Simulated_Annealing(simulatedAnnealing)
 import System.Random
 
-size :: Int
-size = 4 
-
--- Gera cada linha da parte inferior da matriz simétrica
-genLine :: [Float] -> Int -> IO ([Float])
-genLine l 0 = return l
-genLine l 1 = return (l ++ [0])
-genLine l n = do
-            v <- randomIO
-            line <- genLine (v:l) (n-1)
-            return line
-
--- Gera a parte inferior e a diagonal da matriz simétrica
-genHalfMatrix :: [[Float]] -> Int -> IO ([[Float]]) 
-genHalfMatrix l 0 = return l
-genHalfMatrix l n = do
-                line <- genLine [] n 
-                halfMatrix <- genHalfMatrix (line:l) (n-1)
-                return halfMatrix
-
--- Recebe "metade" de uma matriz (parte inferior) e transpõe
--- criando uma matriz "completa"
-transpose :: [[Float]] -> Int -> Int -> IO ([[Float]])
-transpose l 0 nI = return l
-transpose (l:ls) n nI = do
-                    let aux = map (!! (nI-n)) ls
-                    let newL = l ++ aux
-                    newLs <- transpose ls (n-1) nI
-                    return (newL:newLs)
-
--- Gera uma matriz simétrica em que a diagonal tem tudo a 0
-genMatrix :: [[Float]] -> Int -> IO ([[Float]])
-genMatrix l 0 = return l
-genMatrix l n = do
-                halfMatrix <- genHalfMatrix [] n
-                matrix <- transpose halfMatrix n n
-                return matrix
+type Point = (Float, Float)
 
 -- Função para debug da matriz
 printMatrix :: [[Float]] -> IO ()
@@ -47,21 +11,63 @@ printMatrix (l:ls) = do
                         print l
                         printMatrix ls
 
+genGraph :: Int -> IO ([[Float]])
+genGraph n = do
+                nodes <- genPoints n
+                let graph = map (graphNode nodes) [0..n-1]
+                return graph
+
+genPoints :: Int -> IO [Point]
+genPoints 0 = return []
+genPoints n = do
+               x <- randomRIO(0.0, 10.0) 
+               y <- randomRIO(0.0, 10.0) 
+               rest <- genPoints (n-1)
+               return ((x,y) : rest)
+
+nodeDist :: Point -> Point -> Float
+nodeDist (x1,y1) (x2,y2) = sqrt ((x1-x2)^2 + (y1-y2)^2)
+
+graphNode :: [Point] -> Int -> [Float]
+graphNode nodes node = map (nodeDist (nodes !! node)) nodes
+
+
 -- Testa o traveling usando o método de Monte Carlo
-monte_carlo_test :: IO ()
-monte_carlo_test = do
-                matrix <- genMatrix [] size
-                (dist, path) <- traveling_monte_carlo matrix
+monte_carlo_test :: Int -> Int -> IO ()
+monte_carlo_test it size = do
+                matrix <- genGraph size
+                (dist, path) <- traveling_monte_carlo matrix it
                 print ("The path is: " ++ show path) 
                 print ("The cost is: " ++ show dist)
 
-sa_test :: IO ()
-sa_test = do
-            dist_graph <- genMatrix [] size
-            (dist, path) <- simulatedAnnealing dist_graph
+-- Run test for the Simulated Annealing method
+sa_test :: Int -> Int -> IO ()
+sa_test it size = do
+            graph <- genGraph size
+            (dist, path) <- simulatedAnnealing graph it
             print ("Path found: " ++ show path)
             print ("Total cost: " ++ show dist)
 
+printResults :: [(Float, [Int])] -> IO ()
+printResults [] = putStrLn ""
+printResults ((d,p) : t) = do
+                            putStrLn ("Path found: " ++ show p)
+                            putStrLn ("Total cost: " ++ show d)
+                            putStrLn ""
+                            printResults t
+ 
+
+-- Run both methods to compare the solutions
+parallelTravel :: Int -> Int -> Int -> IO ()
+parallelTravel nodes it runs = do
+                            graph <- genGraph nodes
+                            sa <- sequence (replicate runs (simulatedAnnealing graph it))
+                            putStrLn "Simulated Annealing"
+                            printResults sa
+                            mc <- sequence (replicate runs (traveling_monte_carlo graph it))
+                            putStrLn "Monte Carlo"
+                            printResults mc
+               
 -- Main
 main :: IO ()
 main = do

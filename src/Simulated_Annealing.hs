@@ -1,4 +1,4 @@
-module Simulated_Annealing(simulatedAnnealing, pathCost) where
+module Simulated_Annealing(simulatedAnnealing, pathCost, genInitialPath, getNeighbours) where
 
 import System.Random
 import Data.List
@@ -19,6 +19,7 @@ edgeCost :: Graph -> (Int, Int) -> Float
 edgeCost g (from, to) = (g !! from) !! to
 
 
+-- Dado um ponto c e o número de pontos possíveis, calcula os vizinhos de c
 getNeighbours :: Int -> Int -> (Int, Int, Int)
 getNeighbours current n | current == n-1 = (n-2, 0, 1)
                         | current == n-2 = (n-3, n-1, 0)
@@ -34,17 +35,17 @@ updatePath g path current nodeCount temp threshold  | delta < 0 || (temp > 0.001
                                                             old_cost = (edgeCost g (path !! prev, path !! current)) + (edgeCost g (path !! next,path !! next_next))
                                                             new_cost = (edgeCost g (path !! prev, path !! next)) + (edgeCost g (path !! current, path !! next_next)) 
                                                             delta = new_cost - old_cost
-                                                            updated_path = Just (swapNodes current next path)
+                                                            updated_path = Just (swapNodes (path !! current) (path !! next) path)
                                         
-optimizePath :: Graph -> [Int] -> Int -> Int -> Float -> IO (Float, [Int])
-optimizePath g path nc 0  _ = return (pathCost g path nc, path)
-optimizePath g path nc it temp = do
+optimizePath :: Graph -> [Int] -> Int -> Int -> Int -> Float -> IO (Float, [Int])
+optimizePath g path nc _ 0 _ = return (pathCost g path nc, path)
+optimizePath g path nc tot_it it_left temp = do
                                 current <- randomRIO (0, nc-1)
                                 threshold <- randomRIO (0, 1.0)
                                 let result = updatePath g path current nc temp threshold; temp_new = temp * 0.999
                                 case result of
-                                    Just path_new -> optimizePath g path_new nc 100 temp_new
-                                    Nothing -> optimizePath g path nc (it-1) temp_new
+                                    Just path_new -> optimizePath g path_new nc tot_it tot_it temp_new
+                                    Nothing -> optimizePath g path nc tot_it (it_left-1) temp_new
 
 genInitialPath :: [Int] -> Int -> IO [Int]
 genInitialPath [] _ = return []
@@ -54,8 +55,8 @@ genInitialPath nodes nc = do
                         nodes_r <- genInitialPath (tail nodes_n) (nc-1)
                         return ((nodes_n !! 0) : nodes_r)
         
-simulatedAnnealing :: Graph -> IO (Float, [Int])
-simulatedAnnealing g = do
+simulatedAnnealing :: Graph -> Int -> IO (Float, [Int])
+simulatedAnnealing g it = do
                         let nc = length(g); nodes = [0..nc-1]
                         p <- genInitialPath nodes nc
-                        optimizePath g p nc 100 1
+                        optimizePath g p nc it it 1
