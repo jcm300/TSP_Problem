@@ -1,4 +1,4 @@
-import Monte_Carlo
+import Monte_Carlo(traveling_monte_carlo)
 import Simulated_Annealing(simulatedAnnealing)
 import System.Random
 
@@ -17,7 +17,7 @@ genGraph n = do
                 let graph = map (graphNode nodes) [0..n-1]
                 return graph
 
-genPoints :: Int -> IO [Point]
+genPoints :: Int -> IO ([Point])
 genPoints 0 = return []
 genPoints n = do
                x <- randomRIO(0.0, 10.0) 
@@ -30,7 +30,6 @@ nodeDist (x1,y1) (x2,y2) = sqrt ((x1-x2)^2 + (y1-y2)^2)
 
 graphNode :: [Point] -> Int -> [Float]
 graphNode nodes node = map (nodeDist (nodes !! node)) nodes
-
 
 -- Testa o traveling usando o método de Monte Carlo
 monte_carlo_test :: Int -> Int -> IO ()
@@ -55,7 +54,6 @@ printResults ((d,p) : t) = do
                             putStrLn ("Total cost: " ++ show d)
                             putStrLn ""
                             printResults t
- 
 
 -- Run both methods to compare the solutions
 parallelTravel :: Int -> Int -> Int -> IO ()
