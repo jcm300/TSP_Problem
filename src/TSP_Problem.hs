@@ -1,6 +1,7 @@
 import Monte_Carlo(traveling_monte_carlo)
 import Simulated_Annealing(simulatedAnnealing)
 import System.Random
+import Criterion.Main
 
 type Point = (Float, Float)
 
@@ -60,13 +61,17 @@ parallelTravel :: Int -> Int -> Int -> IO ()
 parallelTravel nodes it runs = do
                             graph <- genGraph nodes
                             sa <- sequence (replicate runs (simulatedAnnealing graph it))
-                            putStrLn "Simulated Annealing"
-                            printResults sa
+                            --putStrLn "Simulated Annealing"
+                            --printResults sa
                             mc <- sequence (replicate runs (traveling_monte_carlo graph it))
-                            putStrLn "Monte Carlo"
-                            printResults mc
+                            --putStrLn "Monte Carlo"
+                            --printResults mc
+                            putStr ""
                
 -- Main
-main :: IO ()
-main = do
-        print "TEST"
+main = defaultMain [
+    bgroup "parallelTravel" [
+                                bench "1" $ whnfIO (parallelTravel 5 100 2),
+                                bench "2" $ whnfIO (parallelTravel 10 100 2)
+                            ]
+                   ]
